@@ -109,6 +109,8 @@ public abstract class PatternMapString<R extends ConnectRecord<R>> extends BaseT
         }
         outputStruct.put(config.destfieldname, replacedValue);
         retVal = new SchemaAndValue(outPutSchema, outputStruct);
+      } else {
+        retVal = new SchemaAndValue(outPutSchema, inputStruct);
       }
     }
     return retVal;
