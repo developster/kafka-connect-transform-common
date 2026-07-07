@@ -122,7 +122,7 @@ public abstract class PatternMapString<R extends ConnectRecord<R>> extends BaseT
     for (final String inputFieldName : input.keySet()) {
       outputMap.put(inputFieldName, input.get(inputFieldName));
       log.trace("process() - Processing map field '{}' value '{}'", inputFieldName, input.get(inputFieldName));
-      if (inputFieldName.equals(config.srcfieldname)) {
+      if (inputFieldName.equals(config.srcfieldname) && input.get(inputFieldName) != null) {
         String fieldToMatch = (String) input.get(inputFieldName);
         final Matcher fieldMatcher = this.config.pattern.matcher(fieldToMatch);
         String replacedValue = fieldMatcher.replaceAll(this.config.replacement);
