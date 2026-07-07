@@ -26,6 +26,7 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.header.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,7 @@ import java.util.Map;
 @Title("HeaderToField")
 @Description("This transformation is used to copy the value of a header to a field in the key or " +
     "value of the record.")
-public class HeaderToField<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
+public abstract class HeaderToField<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
   private static final Logger log = LoggerFactory.getLogger(HeaderToField.class);
 
   HeaderToFieldConfig config;
@@ -100,6 +101,15 @@ public class HeaderToField<R extends ConnectRecord<R>> extends BaseKeyValueTrans
     });
   }
 
+  @Override
+  protected SchemaAndValue processMap(R record, Map<String, Object> input) {
+    for (HeaderToFieldConfig.HeaderToFieldMapping mapping : this.config.mappings) {
+      Header header = record.headers().lastWithName(mapping.header);
+      Object fieldValue = null == header ? null : ConversionHandler.of(mapping.schema, mapping.header, mapping.field).convert(header);
+      input.put(mapping.field, fieldValue);
+    }
+    return new SchemaAndValue(null, input);
+  }
 
   @Override
   protected SchemaAndValue processStruct(R record, Schema inputSchema, Struct input) {

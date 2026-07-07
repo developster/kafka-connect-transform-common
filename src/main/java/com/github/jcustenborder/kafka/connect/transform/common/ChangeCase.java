@@ -57,10 +57,23 @@ public abstract class ChangeCase<R extends ConnectRecord<R>> extends BaseTransfo
   Map<Schema, Schema> schemaState = new HashMap<>();
 
   @Override
+  protected SchemaAndValue process(R record, Schema inputSchema, Object input) {
+    if (inputSchema == null && input instanceof String) {
+      return processString(record, null, (String) input);
+    }
+    return super.process(record, inputSchema, input);
+  }
+
+  @Override
   protected SchemaAndValue processStruct(R record, Schema inputSchema, Struct input) {
     final Schema outputSchema = this.schemaState.computeIfAbsent(inputSchema, schema -> convertSchema(schema));
     final Struct outputStruct = convertStruct(inputSchema, outputSchema, input);
     return new SchemaAndValue(outputSchema, outputStruct);
+  }
+
+  @Override
+  protected SchemaAndValue processString(R record, Schema inputSchema, String input) {
+    return new SchemaAndValue(inputSchema, input == null ? null : this.config.from.to(this.config.to, input));
   }
 
   private Struct convertStruct(Schema inputSchema, Schema outputSchema, Struct input) {
@@ -93,6 +106,9 @@ public abstract class ChangeCase<R extends ConnectRecord<R>> extends BaseTransfo
   }
 
   private Object convertArray(Schema inputFieldSchema, Schema outputFieldSchema, List<Object> value) {
+    if (value == null)
+      return null;
+
     final Schema inputSchema = inputFieldSchema.valueSchema();
     final Schema outputSchema = outputFieldSchema.valueSchema();
     switch (outputSchema.type()) {
